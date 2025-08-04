@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pink Reptile Cursor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #0a0a1a;
+      min-height: 100vh;
+      overflow: hidden;
+      cursor: none;
+    }
+    
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    
+    // Set canvas to full window size
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+    
+    // Mouse position tracking
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2, down: false };
+    
+    document.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    
+    document.addEventListener("mousedown", () => {
+      mouse.down = true;
+      // Create a visual effect on click
+      ctx.fillStyle = 'rgba(255, 182, 193, 0.3)';
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, 40, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    document.addEventListener("mouseup", () => {
+      mouse.down = false;
+    });
+    
+    // Reptile segment class
+    class Segment {
+      constructor(x, y, length, angle, index, totalSegments) {
+        this.x = x;
+        this.y = y;
+        this.length = length;
+        this.angle = angle;
+        this.index = index;
+        this.totalSegments = totalSegments;
+        this.updateEndpoints();
+      }
+      
+      updateEndpoints() {
+        this.nextX = this.x + Math.cos(this.angle) * this.length;
+        this.nextY = this.y + Math.sin(this.angle) * this.length;
+      }
+      
+      follow(tx, ty) {
+        const dx = tx - this.x;
+        const dy = ty - this.y;
+        this.angle = Math.atan2(dy, dx);
+        this.x = tx - Math.cos(this.angle) * this.length;
+        this.y = ty - Math.sin(this.angle) * this.length;
+        this.updateEndpoints();
+      }
+      
+      draw(ctx) {
+        // Draw body segment
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.nextX, this.nextY);
+        
+        // Pink gradient from head to tail
+        const headHue = 330; // Pink hue
+        const tailLightness = 60 - (this.index / this.totalSegments) * 20;
+        ctx.strokeStyle = `hsl(${headHue}, 100%, ${tailLightness}%)`;
+        
+        // Segment width - head is thicker
+        ctx.lineWidth = 8 - (this.index / this.totalSegments) * 6;
+        ctx.lineCap = "round";
+        ctx.stroke();
+        
+        // Draw head (first segment) with eyes
+        if (this.index === 0) {
+          this.drawHead(ctx);
+        }
+      }
+      
+      drawHead(ctx) {
+        // Draw head circle
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = "hsl(330, 100%, 70%)";
+        ctx.fill();
+        
+        // Draw head outline
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        // Draw eyes
+        this.drawEyes(ctx);
+      }
+      
+      drawEyes(ctx) {
+        // Calculate eye positions based on angle
+        const eyeDistance = 5;
+        const leftEyeAngle = this.angle - Math.PI/5;
+        const rightEyeAngle = this.angle + Math.PI/5;
+        
+        // Left eye
+        const leftEyeX = this.x + Math.cos(leftEyeAngle) * eyeDistance;
+        const leftEyeY = this.y + Math.sin(leftEyeAngle) * eyeDistance;
+        
+        ctx.beginPath();
+        ctx.arc(leftEyeX, leftEyeY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        
+        // Right eye
+        const rightEyeX = this.x + Math.cos(rightEyeAngle) * eyeDistance;
+        const rightEyeY = this.y + Math.sin(rightEyeAngle) * eyeDistance;
+        
+        ctx.beginPath();
+        ctx.arc(rightEyeX, rightEyeY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        
+        // Pupils - look toward mouse
+        const pupilDistance = 1.5;
+        const pupilAngle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+        
+        // Left pupil
+        const leftPupilX = leftEyeX + Math.cos(pupilAngle) * pupilDistance;
+        const leftPupilY = leftEyeY + Math.sin(pupilAngle) * pupilDistance;
+        
+        ctx.beginPath();
+        ctx.arc(leftPupilX, leftPupilY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
+        
+        // Right pupil
+        const rightPupilX = rightEyeX + Math.cos(pupilAngle) * pupilDistance;
+        const rightPupilY = rightEyeY + Math.sin(pupilAngle) * pupilDistance;
+        
+        ctx.beginPath();
+        ctx.arc(rightPupilX, rightPupilY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
+      }
+    }
+    
+    // Create reptile segments
+    const segmentCount = 15;
+    const segmentLength = 15;
+    
+    let segments = [];
+    for (let i = 0; i < segmentCount; i++) {
+      segments.push(new Segment(
+        mouse.x, 
+        mouse.y, 
+        segmentLength, 
+        0,
+        i,
+        segmentCount
+      ));
+    }
+    
+    // Animation loop
+    function animate() {
+      // Clear with slight transparency for trail effect
+      ctx.fillStyle = "rgba(10, 10, 20, 0.08)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add slight delay to mouse position for smoother movement
+      const delayedMouse = {
+        x: mouse.x * 0.1 + segments[0].x * 0.9,
+        y: mouse.y * 0.1 + segments[0].y * 0.9
+      };
+      
+      segments[0].follow(delayedMouse.x, delayedMouse.y);
+      for (let i = 1; i < segments.length; i++) {
+        segments[i].follow(
+          segments[i - 1].x, 
+          segments[i - 1].y
+        );
+      }
+      
+      // Draw all segments
+      for (let seg of segments) {
+        seg.draw(ctx);
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    
+    // Start animation
+    animate();
+  </script>
+</body>
+</html>

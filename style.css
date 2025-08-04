@@ -1,0 +1,12 @@
+/* style.css */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000; /* Dark background for contrast */
+  overflow: hidden; /* Prevent scrollbars */
+}
+
+#canvas {
+  display: block;
+  cursor: none; /* Hide default cursor */
+}
