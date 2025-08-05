@@ -5,13 +5,13 @@ A playful pink reptile cursor that slithers smoothly with glowing trails, featur
 
 ![Demo](Reptile_Cursor.gif)
 
-## Features
+### Features
 - Custom animated reptile cursor
 - Glowing trail using canvas
 - Eye-tracking and click visuals
 - Smooth, responsive movement
 
-## Tech Stack
+### Tech Stack
 - HTML5
 - CSS3
 - JavaScript (Canvas API)
